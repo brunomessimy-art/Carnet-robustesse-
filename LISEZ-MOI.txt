@@ -1,0 +1,8 @@
+CARNET ROBUSTESSE — ANDROID
+
+Le fichier index.html est l'application.
+La dictée fonctionne avec le bouton micro si Chrome l'autorise. Sinon, touchez la zone de texte puis utilisez le micro Gboard/Samsung.
+
+Pour une vraie installation sur l'écran d'accueil, publiez le dossier sur une adresse HTTPS, ouvrez cette adresse dans Chrome Android puis choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».
+
+Les notes sont stockées localement dans le navigateur. Utilisez régulièrement l'export JSON comme sauvegarde.

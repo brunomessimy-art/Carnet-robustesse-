@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173B4B">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Carnet Robustesse</title>
+<style>
+:root{--navy:#173B4B;--teal:#4F9E9B;--coral:#E98264;--ochre:#DCA64A;--cream:#FBF6EC;--ink:#23343D;--muted:#6E7C80;--line:#D7DED9}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(#fffaf2,#f6ecdf);font-family:system-ui,sans-serif;color:var(--ink)}
+.app{max-width:760px;margin:auto;padding:16px 14px 70px}.hero{background:var(--navy);color:#fff;border-radius:24px;padding:22px}.hero h1{font:700 30px Georgia,serif;margin:0}.hero p{margin:6px 0 0;color:#e7f2f1}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.tabs button{background:#fff;color:var(--navy);border:1px solid var(--line)}.tabs .active{background:var(--teal);color:#fff}
+.card{background:#ffffffea;border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:12px}
+button,.btn,select,input,textarea{font:inherit}button,.btn{border:0;border-radius:14px;padding:12px 14px;min-height:46px;background:var(--navy);color:#fff;font-weight:700}
+.secondary{background:#fff!important;color:var(--navy)!important;border:1px solid var(--line)!important}.soft{background:#e7f1ef!important;color:var(--navy)!important}.warn{background:#f8e4dc!important;color:#7a3a2b!important}
+label{display:block;font-size:13px;font-weight:800;margin:10px 0 6px;color:var(--navy)}select,input,textarea{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff;padding:13px 14px;font-size:16px}
+textarea{min-height:170px;resize:vertical;line-height:1.5}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.mic{width:100%;background:var(--coral)!important}.mic.listening{background:#a94634!important}
+.hidden{display:none!important}.note{background:#fff;border:1px solid var(--line);border-left:5px solid var(--teal);border-radius:16px;padding:14px;margin:10px 0}.meta{display:flex;justify-content:space-between;gap:8px}.tag{background:#e7f1ef;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:800}.small,.hint{font-size:13px;color:var(--muted)}.note p{white-space:pre-wrap;line-height:1.5}.note-actions{display:flex;gap:6px}.section-title{font:700 22px Georgia,serif;color:var(--navy);margin:0 0 8px}.toolbar{display:grid;grid-template-columns:1fr auto;gap:8px}.empty{text-align:center;padding:24px;color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}@media(max-width:520px){.grid2,.toolbar{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<section class="hero"><h1>ROBUSTESSE</h1><p>Carnet de notes, de souvenirs et d’écriture</p></section>
+<div class="tabs"><button id="tw" class="active">Écrire</button><button id="tn">Mes notes</button><button id="tb">Sauvegarde</button></div>
+
+<section id="write" class="card">
+<h2 class="section-title">Écrire en parlant</h2>
+<div class="grid2">
+<div><label>Rubrique</label><select id="cat">
+<option>Idée éclair</option><option>Souvenir</option><option>Métaphore</option><option>Atelier de chapitre</option><option>Interlude</option><option>Phrase à garder</option><option>Passage à retravailler</option><option>Fil de l’eau</option><option>Lieu / maison</option><option>Page libre</option>
+</select></div>
+<div><label>Titre</label><input id="title" placeholder="Facultatif"></div>
+</div>
+<label>Ta note</label><textarea id="text" placeholder="Parle ou écris ici…"></textarea>
+<div class="actions"><button id="mic" class="mic">🎙️ Commencer la dictée</button><button id="save">Ajouter au carnet</button><button id="clear" class="secondary">Effacer</button></div>
+<p id="hint" class="hint">Si besoin, touche la zone de texte puis utilise le micro de ton clavier Android.</p>
+<p id="status" class="small"></p>
+</section>
+
+<section id="notes" class="card hidden">
+<h2 class="section-title">Mes notes</h2>
+<div class="toolbar"><input id="search" placeholder="Rechercher…"><select id="filter"><option value="">Toutes les rubriques</option></select></div>
+<p id="count" class="small"></p><div id="list"></div>
+</section>
+
+<section id="backup" class="card hidden">
+<h2 class="section-title">Sauvegarde</h2>
+<p class="hint">Les notes restent sur ce téléphone dans le navigateur. Exporte une sauvegarde régulièrement.</p>
+<div class="actions"><button id="txt">Exporter en texte</button><button id="json" class="soft">Sauvegarde .json</button><label class="btn secondary" for="imp">Importer</label><input id="imp" type="file" accept=".json,application/json" class="hidden"></div>
+<button id="install" class="secondary hidden" style="width:100%;margin-top:10px">Installer sur l’écran d’accueil</button>
+<button id="wipe" class="warn" style="width:100%;margin-top:10px">Effacer toutes les notes</button>
+</section>
+<footer>Robustesse — Bruno</footer>
+</div>
+
+<script>
+(()=>{const $=s=>document.querySelector(s),KEY='robustesse_notes_v1';let notes=[];try{notes=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
+if(!Array.isArray(notes))notes=[];const saveAll=()=>localStorage.setItem(KEY,JSON.stringify(notes));
+const panels={w:$('#write'),n:$('#notes'),b:$('#backup')},tabs={w:$('#tw'),n:$('#tn'),b:$('#tb')};
+function show(k){Object.values(panels).forEach(x=>x.classList.add('hidden'));Object.values(tabs).forEach(x=>x.classList.remove('active'));panels[k].classList.remove('hidden');tabs[k].classList.add('active');if(k==='n')render()}
+tabs.w.onclick=()=>show('w');tabs.n.onclick=()=>show('n');tabs.b.onclick=()=>show('b');
+const cat=$('#cat'),title=$('#title'),text=$('#text'),status=$('#status'),list=$('#list'),search=$('#search'),filter=$('#filter'),count=$('#count');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function render(){const cats=[...new Set(notes.map(n=>n.category))].sort(),cur=filter.value;filter.innerHTML='<option value="">Toutes les rubriques</option>'+cats.map(c=>'<option>'+esc(c)+'</option>').join('');filter.value=cur;
+const q=search.value.toLowerCase().trim(),f=filter.value,shown=notes.filter(n=>(!q||(n.category+' '+(n.title||'')+' '+n.text).toLowerCase().includes(q))&&(!f||n.category===f)).sort((a,b)=>b.created.localeCompare(a.created));
+count.textContent=shown.length+' note'+(shown.length>1?'s':'');list.innerHTML=shown.length?shown.map(n=>`<article class="note"><div class="meta"><span class="tag">${esc(n.category)}</span><span class="small">${new Date(n.created).toLocaleString('fr-FR')}</span></div>${n.title?`<strong>${esc(n.title)}</strong>`:''}<p>${esc(n.text)}</p><div class="note-actions"><button class="soft" data-edit="${n.id}">Modifier</button><button class="warn" data-del="${n.id}">Supprimer</button></div></article>`).join(''):'<div class="empty">Aucune note.</div>'}
+search.oninput=render;filter.onchange=render;
+$('#save').onclick=()=>{const v=text.value.trim();if(!v){status.textContent='Dicte ou écris une note.';return}notes.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),category:cat.value,title:title.value.trim(),text:v,created:new Date().toISOString()});saveAll();title.value='';text.value='';status.textContent='Note enregistrée sur ce téléphone.'};
+$('#clear').onclick=()=>{title.value='';text.value=''};
+list.onclick=e=>{const d=e.target.closest('[data-del]'),ed=e.target.closest('[data-edit]');if(d&&confirm('Supprimer cette note ?')){notes=notes.filter(n=>n.id!==d.dataset.del);saveAll();render()}if(ed){const n=notes.find(x=>x.id===ed.dataset.edit);if(n){cat.value=n.category;title.value=n.title||'';text.value=n.text;notes=notes.filter(x=>x.id!==n.id);saveAll();show('w');status.textContent='Note chargée pour modification.'}}};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition,mic=$('#mic'),hint=$('#hint');let rec,listening=false,base='';
+if(SR){rec=new SR();rec.lang='fr-FR';rec.continuous=true;rec.interimResults=true;rec.onstart=()=>{listening=true;base=text.value.trim();mic.classList.add('listening');mic.textContent='⏹️ Arrêter la dictée';hint.textContent='Je t’écoute…'};
+rec.onresult=e=>{let fin='',inter='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t+' ';else inter+=t}const pre=base?base+' ':'';text.value=pre+fin+inter;if(fin.trim())base=(pre+fin).trim()};
+rec.onend=()=>{listening=false;mic.classList.remove('listening');mic.textContent='🎙️ Commencer la dictée';hint.textContent='Dictée arrêtée.'};mic.onclick=()=>{try{listening?rec.stop():rec.start()}catch(e){}}}
+else{mic.disabled=true;mic.textContent='🎙️ Utilise le micro du clavier'}
+function dl(name,content,type){const u=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+$('#txt').onclick=()=>dl('Carnet_Robustesse_Bruno.txt','ROBUSTESSE — Carnet de Bruno\n\n'+notes.map((n,i)=>`${i+1}. ${n.category}${n.title?' — '+n.title:''}\n${new Date(n.created).toLocaleString('fr-FR')}\n${n.text}`).join('\n\n---\n\n'),'text/plain;charset=utf-8');
+$('#json').onclick=()=>dl('Carnet_Robustesse_sauvegarde.json',JSON.stringify(notes,null,2),'application/json');
+$('#imp').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(Array.isArray(d)&&confirm('Remplacer les notes actuelles ?')){notes=d;saveAll();alert('Sauvegarde importée.')}}catch(x){alert('Fichier non valide.')}};
+$('#wipe').onclick=()=>{if(confirm('Effacer toutes les notes ?')){notes=[];saveAll();render()}};
+let promptEvent=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;$('#install').classList.remove('hidden')});$('#install').onclick=async()=>{if(promptEvent){promptEvent.prompt();await promptEvent.userChoice;promptEvent=null;$('#install').classList.add('hidden')}};
+if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});render()})();
+</script>
+</body></html>
